@@ -214,7 +214,7 @@ int main(int argc, char** argv)
 
             // set polynomial order per element
             unsigned int range = std::ceil( double(cellmapper.size()) / (monom_max_order-1) );
-            for (auto it = grid.leafView().begin<0>(), end = grid.leafView().end<0>();
+            for (Grid::LeafGridView::Codim<0>::Iterator it = grid.leafView().begin<0>(), end = grid.leafView().end<0>();
                  it != end; ++it)
             {
                 fem.setOrder(*it, 2 + cellmapper.map(*it) / range);
