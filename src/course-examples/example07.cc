@@ -90,7 +90,7 @@ int main(int argc, char** argv)
 	if (argc!=3)
 	  {
 		if(helper.rank()==0)
-		  std::cout << "usage: ./example02 <startLevel> <maxLevel>" << std::endl;
+		  std::cout << "usage: ./example07 <startLevel> <maxLevel>" << std::endl;
 		return 1;
 	  }
 
@@ -103,12 +103,16 @@ int main(int argc, char** argv)
     // sequential version
     if (1 && helper.size()==1)
     {
+#if HAVE_UG 
       UGUnitSquare grid;
       grid.loadBalance();
       grid.globalRefine(startLevel);
       typedef UGUnitSquare::LeafGridView GV;
       const GV& gv=grid.leafView();
       adaptivity(grid,gv,startLevel,maxLevel);
+#else
+      std::cout << "This example requires UG!" << std::endl;
+#endif
     }
   }
   catch (Dune::Exception &e){
