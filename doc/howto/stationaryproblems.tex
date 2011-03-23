@@ -92,12 +92,24 @@ Note: We might have a different set of basis functions on each element.
 
 \begin{frame}
 \frametitle{Global Basis; Finite Element Isomorphism}
-For $j\in \mathcal{I}_{U_h^k}$ set $L(j) = \{ (e,l) \, : \, g(e,l) = j\}$ (all local degrees 
-of freedom associated with global degree of freedom $j$.
-
-Global basis:
+Define the global indices associated with element $e$
 \begin{equation*}
-\Phi_{U_h^k} = \left\{ \phi_j(x) = \sum_{(e,l)\in L(j)} \hat{\phi}_{e,l}(\mu_e^{-1}(x)) \, \chi_e(x) 
+G(e) = \left\{ j \ : \ g(e,m) = j \wedge 0 \leq m < n(e) \right\}
+\end{equation*}
+and set
+\begin{align*}
+\chi_{e,j} &= \left\{ \begin{array}{ll}
+1 & j \in G(e) \\
+0 & \text{else}
+\end{array} \right., &
+\delta_{i,j} &= \left\{ \begin{array}{ll}
+1 & i=j  \\
+0 & \text{else}
+\end{array} \right. .
+\end{align*}
+Then the global basis can be written as:
+\begin{equation*}
+\Phi_{U_h^k} = \left\{ \phi_j(x) = \sum_{e\in E_h^0} \sum_{l=0}^{n(e)-1} \delta_{j,g(e,l)} \, \hat{\phi}_{e,l}(\mu_e^{-1}(x))  
 \, : \, j \in \mathcal{I}_{U_h^k} \right\}.
 \end{equation*}
 
@@ -134,17 +146,17 @@ For linear PDEs $\mathcal{R}$ is affine linear: $\mathcal{R}(\mathbf{u}) = \math
 \begin{split}
 &(\mathcal{R}(\mathbf{u}) )_i  = r\left(\text{FE}(\mathbf{u}),\phi_i\right)
 = \sum_{e\in E_h^0} \int_{\Omega_e} \nabla \text{FE}(\mathbf{u}) \cdot \nabla\phi_i 
-+ a \, \text{FE}_{\Phi_{U_h^k}}(\mathbf{u}) \phi_i - f \phi_i \,dx\\
-&= \sum_{e\in E_h^0} \int_{\Omega_e} 
++ a \, \text{FE}(\mathbf{u}) \phi_i - f \phi_i \,dx\\
+&= \sum_{e\in E_h^0} {\color{red}\chi_{e,i}} \int_{\Omega_e} 
 \left[ \sum_{l=0}^{n(e)-1} (\mathbf{u})_{g(e,l)} \nabla_x \hat\phi_{e,l}(\mu_e^{-1}(x))\right]
-\cdot \nabla_x \underbrace{\hat\phi_{e,m}}_{g(e,m)=i}(\mu_e^{-1}(x))\\
+\cdot  \underbrace{\nabla_x \hat\phi_{e,m} (\mu_e^{-1}(x))}_{g(e,m)=i\in G(e)}\\
 & + a \, \left[ \sum_{l=0}^{n(e)-1} (\mathbf{u})_{g(e,l)} \hat\phi_{e,l}(\mu_e^{-1}(x)) \right] \hat\phi_{e,m}(\mu_e^{-1}(x))
 - f \hat\phi_{e,m}(\mu_e^{-1}(x)) \, dx\\
 &= \sum_{e\in E_h^0} \int_{\hat\Omega_e} 
 \Biggl\{\left[ \sum_{l=0}^{n(e)-1} (\mathbf{u})_{g(e,l)} (\nabla \mu_e(\hat{x}))^{-T}\nabla_{\hat{x}} \hat\phi_{e,l}(\hat{x})\right]
 \cdot (\nabla \mu_e(\hat{x}))^{-T} \nabla_{\hat{x}} \hat\phi_{e,m}(\hat{x})\\
 & + a \, \left[ \sum_{l=0}^{n(e)-1} (\mathbf{u})_{g(e,l)} \hat\phi_{e,l}(\hat{x}) \right] \hat\phi_{e,m}(\hat{x})
-- f \hat\phi_{e,m}(\hat{x}) \Biggr\} \text{det} \nabla\mu_e(\hat{x}) \, d\hat{x} .
+- f \hat\phi_{e,m}(\hat{x}) \Biggr\} \text{det} \nabla\mu_e(\hat{x}) \, d\hat{x} {\color{red}\chi_{e,i}} .
 \end{split}
 \end{equation*}
 \end{frame}
@@ -155,7 +167,7 @@ Define restriction to local degrees of freedom
 \begin{align*}
 \mathbf{U}_e &= \mathbb{R}^{n(e)}, &
 \mathbf{R}_e &: \mathbf{U} \to \mathbf{U}_e, &
-\left(\mathbf{U}_e(\mathbf{u})\right)_l &= (\mathbf{u})_{g(e,l)} \quad 0\leq l < n(e).
+\left(\mathbf{R}_e(\mathbf{u})\right)_l &= (\mathbf{u})_{\color{orange}g(e,l)} \quad 0\leq l < n(e).
 \end{align*}
 Define \textit{local operator} $\bm{\alpha}^{\text{vol}}_{h,e} : \mathbf{U}_e \to \mathbf{U}_e$ (user part):
 \begin{equation*}
@@ -203,7 +215,7 @@ The Jacobian matrix is defined as
 = \frac{\partial (\mathcal{R})_i}{\partial (\mathbf{u})_j}(\mathbf{u}^k)
 = \sum_{e\in E_h^0} \frac{\partial (\bm{\alpha}_{h,e}^{\text{vol}})_m }{\partial (\mathbf{u})_l } (\mathbf{R}_e \mathbf{u}),
 \end{equation*}
-where $g(e,m)=l, g(e,l)=j$.
+where $g(e,m)=i, g(e,l)=j$.
 
 Again, the Jacobian can be computed from local contributions:
 \begin{equation*}
@@ -215,6 +227,7 @@ The local Jacobians can be
 \item programmed explicitly by the user, or
 \item derived generically through numerical differentiation. This requires only coding
 of the local residual contributions $\bm{\alpha}_{h,e}^{\text{vol}}$.
+\item Same with automatic differentiation.
 \end{itemize}
 \end{frame}
 
@@ -225,7 +238,7 @@ is a special case of the nonlinear case \ldots
 \begin{enumerate}
 \item Given $\mathbf{u}^0\in\mathbf{U}$.
 \item Compute $\mathbf{r} = \mathcal{R}(\mathbf{u}^0)$.
-\item Assemble Jacobian System $\mathbf{A} = \nabla\mathcal{R}(\mathbf{u}^0)$.
+\item Assemble Jacobian System $\mathbf{A} = \nabla\mathcal{R}(\mathbf{u}^0)$ once.
 \item Solve $\mathbf{A} \mathbf{z} = \mathbf{r}$ with some linear solver.
 \item Update $\mathbf{u} = \mathbf{u}^{0} - \mathbf{z}$.
 \end{enumerate}
@@ -807,7 +820,7 @@ u|_{\Omega_e} = \text{const} \ \forall e\in E_h^0\}$. $v\in W_h$:
 \sum_{e\in E_h^0} \biggl\{ \int_{\Omega_e} (au - q) v \, dx - 
 \int_{\partial\Omega_e} (\nabla u\cdot n) v \, ds \biggr\}\\
 &\quad = \sum_{e\in E_h^0} \biggl\{ \int_{\Omega_e} (au - q) v \, dx
-- \int_{\partial\Omega_e\cap\Omega_e} (\nabla u\cdot n) v \, ds\\
+- \int_{\partial\Omega_e\cap\Omega} (\nabla u\cdot n) v \, ds\\
 &\hspace{30mm} - \int_{\partial\Omega_e\cap\Gamma_D} (\nabla u\cdot n) v \, ds
 + \int_{\partial\Omega_e\cap\Gamma_N} j v \, ds \biggr\}\\
 &\quad = \sum_{e\in E_h^0} \int_{\Omega_e} (au - q) v \, dx
