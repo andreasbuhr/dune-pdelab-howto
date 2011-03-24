@@ -119,7 +119,7 @@ d_{0}, \ldots, d_{s}
 \item \textit{Explicit} schemes: $a_{ij} = 0$ for $j>i$ and $b_{ij}=0$ for $j\geq i$.
 \item \textit{Diagonally implicit} schemes: $a_{ij} = b_{ij}= 0$ for $j>i$.
 \item Fully implicit schemes are not considered.
-\item Normalization: $a_{ii}=1$.
+\item Normalization: $a_{ii}=1$ (SDIRK schemes).
 \item You can easily add new schemes.
 \end{itemize}
 \end{frame}
@@ -140,7 +140,7 @@ A = \left[\begin{array}{cc}
 \right)^T.
 \end{equation*}
 Explicit/implicit Euler ($\theta\in\{0,1\}$), Crank-Nicolson ($\theta=\nicefrac12$).
-\item Heun's second order explicit method
+\item Heun's second order explicit method (SSP Runge-Kutta)
 \begin{equation*}
 A = \left[\begin{array}{ccc}
 -1 & 1 & 0\\
