@@ -4,8 +4,7 @@
 #include<dune/pdelab/gridfunctionspace/gridfunctionspace.hh>
 #include<dune/pdelab/gridfunctionspace/gridfunctionspaceutilities.hh>
 #include<dune/pdelab/gridfunctionspace/interpolate.hh>
-#include<dune/pdelab/finiteelementmap/q1fem.hh>
-#include<dune/pdelab/finiteelementmap/q22dfem.hh>
+#include<dune/pdelab/finiteelementmap/qkdg.hh>
 
 template<class GV> 
 void thinterpolate (const GV& gv)
@@ -16,16 +15,16 @@ void thinterpolate (const GV& gv)
   const int dim = GV::dimension;
 
   //  make Q_1 grid function space
-  typedef Dune::PDELab::Q1LocalFiniteElementMap<D,R,dim> Q1FEM;
+  typedef Dune::PDELab::QkCGLocalFiniteElementMap<D,R,1,dim> Q1FEM;
   Q1FEM q1fem;                        // Q1 finite elements
   typedef Dune::PDELab::GridFunctionSpace<GV,Q1FEM> Q1GFS;
   Q1GFS q1gfs(gv,q1fem);              // Q1 space
   
   // make Q_2 grid function spaces
-  typedef Dune::PDELab::Q22DLocalFiniteElementMap<D,R> Q22DFEM;
-  Q22DFEM q22dfem;                    // Q2 finite elements, no 3D :-(
-  typedef Dune::PDELab::GridFunctionSpace<GV,Q22DFEM> Q2GFS;
-  Q2GFS q2gfs(gv,q22dfem);            // Q2 space
+  typedef Dune::PDELab::QkCGLocalFiniteElementMap<D,R,2,dim> Q2FEM;
+  Q2FEM q2fem;                       // Q2 finite elements
+  typedef Dune::PDELab::GridFunctionSpace<GV,Q2FEM> Q2GFS;
+  Q2GFS q2gfs(gv,q2fem);             // Q2 space
 
   // make velocity grid function space
   typedef Dune::PDELab::PowerGridFunctionSpace<Q2GFS,dim> VGFS;
