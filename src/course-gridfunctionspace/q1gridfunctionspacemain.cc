@@ -17,7 +17,6 @@ int main(int argc, char** argv)
     Dune::FieldVector<bool,2> B(false);
     Dune::YaspGrid<2> grid(L,N,B,0);
     q1GridFunctionSpace(grid.leafView());
-
     return 0;
   }
   catch (Dune::Exception &e){ std::cerr << "Dune reported error: " << e << std::endl;
