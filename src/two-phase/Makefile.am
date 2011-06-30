@@ -12,9 +12,13 @@ SUPERLUPROGRAMS = dnaplmfd
 endif
 
 if MPI
-noinst_PROGRAMS = $(SUPERLUPROGRAMS) \
-	dnaplfv
+MPIPROGRAMS = dnaplfv
 endif
+
+
+noinst_PROGRAMS = $(SUPERLUPROGRAMS) \
+	$(MPIPROGRAMS)
+
 
 #	novlp_test	
 
