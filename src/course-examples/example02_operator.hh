@@ -112,13 +112,13 @@ public:
                        const LFSV& lfsv_s, R& r_s) const
   {
     // some types
-    typedef typename LFSV::Traits::FiniteElementType::
+    typedef typename LFSU::Traits::FiniteElementType::
       Traits::LocalBasisType::Traits::DomainFieldType DF;
-    typedef typename LFSV::Traits::FiniteElementType::
+    typedef typename LFSU::Traits::FiniteElementType::
       Traits::LocalBasisType::Traits::RangeFieldType RF;
-    typedef typename LFSV::Traits::FiniteElementType::
+    typedef typename LFSU::Traits::FiniteElementType::
       Traits::LocalBasisType::Traits::RangeType RangeType;
-    typedef typename LFSV::Traits::SizeType size_type;
+    typedef typename LFSU::Traits::SizeType size_type;
         
     // dimensions
     const int dim = IG::dimension;
@@ -144,7 +144,7 @@ public:
         Dune::FieldVector<DF,dim> local = ig.geometryInInside().global(it->position());
 
         // evaluate basis functions at integration point
-        std::vector<RangeType> phi(lfsv_s.size());
+        std::vector<RangeType> phi(lfsu_s.size());
         lfsu_s.finiteElement().localBasis().evaluateFunction(local,phi);
 
         // evaluate u (e.g. flux may depend on u)
@@ -163,8 +163,8 @@ public:
             
         // integrate j
         RF factor = it->weight()*ig.geometry().integrationElement(it->position());
-        for (size_type i=0; i<lfsv_s.size(); i++)
-          r_s.accumulate(lfsv_s,i,j*phi[i]*factor);
+        for (size_type i=0; i<lfsu_s.size(); i++)
+          r_s.accumulate(lfsu_s,i,j*phi[i]*factor);
       }
   }
 
