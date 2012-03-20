@@ -788,11 +788,11 @@ We wish to demonstrate that PDELab allows also the implementation of Finite Volu
 
 Consider again the elliptic model problem:
 \begin{subequations} \label{Eq:Example04}
-\begin{align*}
+\begin{align}
  -\Delta u + a u  &= q &&\text{in $\Omega\subset\mathbb{R}^d$},\\
                 u &= g &&\text{on $\Gamma_D\subseteq\partial\Omega$},\\
 -\nabla u \cdot n &= j &&\text{on $\Gamma_N=\partial\Omega\setminus\Gamma_D$},
-\end{align*}
+\end{align}
 \end{subequations}
 where $a>0$ when $\Gamma_D=\emptyset$.
 
@@ -803,7 +803,7 @@ We show how to formulate this method in the framework of residual forms.
 \frametitle{Discrete Weak Formulation I}
 For a grid $E_h^0$ define $W_h = \{ u \in L_2(\Omega) \,:\, 
 u|_{\Omega_e} = \text{const} \ \forall e\in E_h^0\}$. $v\in W_h$:
-\begin{equation*}
+{\small\begin{equation*}
 \begin{split}
 & \sum_{e\in E_h^0} \int_{\Omega_e} (-\Delta u + au - q) v \, dx = 
 \sum_{e\in E_h^0} \biggl\{ \int_{\Omega_e} (au - q) v \, dx - 
@@ -817,7 +817,7 @@ u|_{\Omega_e} = \text{const} \ \forall e\in E_h^0\}$. $v\in W_h$:
 &\hspace{30mm} - \sum_{f\in B_h^1} \int_{\Omega_f\cap\Gamma_D} (\nabla u\cdot n) v \, ds
 + \sum_{f\in B_h^1} \int_{\Omega_f\cap\Gamma_N} j v \, ds .
 \end{split}
-\end{equation*}
+\end{equation*}}
 $E_h^1$: interior faces, $B_h^1$: boundary faces, $n_f$ pointing from $e^-_f$ to $e^+_f$,
 $x_f^-$ center of $e_f^-$, $x_f^+$ center of $e_f^+$, $[v]|_f = v(x_f^-) - v(x_f^+)$.
 \end{frame}
