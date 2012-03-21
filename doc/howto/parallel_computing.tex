@@ -1,39 +1,3 @@
-%\only<presentation>{
-
-%\lstset{language=C++, basicstyle=\ttfamily, 
-%  keywordstyle=\color{red}\bfseries, tabsize=4, stringstyle=\ttfamily,
-%  commentstyle=\it, extendedchars=true, escapeinside={/*@}{@*/}}
-
-%\lstset{language=C++, basicstyle=\scriptsize\ttfamily,
-%  stringstyle=\ttfamily, commentstyle=\it, extendedchars=true,
-%  numbers=left, numberstyle=\tiny, stepnumber=2, numbersep=5pt,
-%  breakatwhitespace=true, breaklines=true}
-%\definecolor{darkgray}{gray}{0.4}
-%\lstset{keywordstyle=\color{violet},
-%        commentstyle=\color{darkgray},
-%        stringstyle=\color{orange},
-%        emph={bool,int,unsigned,char,true,false,void}, emphstyle=\color{blue},
-%        emph={[2]\#include,\#define,\#ifdef,\#endif}, emphstyle={[2]\color{violet}},
-%        }
-%}
-%\only<article>{
-%\lstset{language=C++, basicstyle=\small, 
-%  keywordstyle=\bfseries, tabsize=4, stringstyle=\ttfamily,
-%  commentstyle=\it, extendedchars=true, escapeinside={/*@}{@*/}}
-
-%\lstset{language=C++, basicstyle=\small\ttfamily,
-%  stringstyle=\ttfamily, commentstyle=\it, extendedchars=true,
-%  numbers=left, numberstyle=\tiny, stepnumber=2, numbersep=5pt,
-%  breakatwhitespace=true, breaklines=true}
-%\definecolor{darkgray}{gray}{0.4}
-%\lstset{keywordstyle=\color{violet},
-%        commentstyle=\color{darkgray},
-%        stringstyle=\color{orange},
-%        emph={bool,int,unsigned,char,true,false,void}, emphstyle=\color{blue},
-%        emph={[2]\#include,\#define,\#ifdef,\#endif}, emphstyle={[2]\color{violet}},
-%        }
-%        }
-
 \section{Parallel PDELab}
 \subsection{Introduction}
 
@@ -49,7 +13,7 @@ essentially since some years
 up to 12-core processors are available.
 \item Several multi-core processors can be used on one mainboard (e.g. four 12-core processors)
 \item Computer cluster with several multi-core multi-processor servers are affordable even for small companies
-\item High-performance computer have up to 294912 cores (JUGENE).
+\item High-performance computer have up to 705'024 cores (K computer, Japan).
 \end{itemize}
 
 \end{frame}
@@ -146,7 +110,7 @@ between processors with messages send over a network (computer clusters, super c
 \end{itemize}
 
 \begin{small}\textit{Remark:} There is a special MPICH version for shared-memory machines using memory copy operations instead of slower mesage passing algorithms.
-OpenMPI can even distinguish between processes which share the same address space and
+OpenMPI can even distinguish automatically between processes which share the same address space and
 processes on remote machines and use either memory copy or message passing.
 \end{small}
 \end{frame}
@@ -675,7 +639,8 @@ constraints container (usually \lstinline!OverlappingConformingDirichletConstrai
 
 \begin{frame}[fragile]
   \frametitle{Overlapping Example}
-  \begin{lstlisting}[basicstyle=\small]
+\only<presentation>{\lstset{basicstyle=\scriptsize\ttfamily}}
+\begin{lstlisting}
 // 1. Create an overlapping grid
 Dune::FieldVector<double,2> L(1.0);
 Dune::FieldVector<int,2> N(16);
@@ -693,7 +658,13 @@ typedef Dune::PDELab::ISTLVectorBackend<1> VBE;
 typedef Dune::PDELab::GridFunctionSpace<GV,FEM,CON,VBE,
 Dune::PDELab::SimpleGridFunctionStaticSize> GFS;
 GFS gfs(gv,fem);
-
+\end{lstlisting}  
+\only<presentation>{\lstset{basicstyle=\normalsize\ttfamily}}
+\end{frame}
+\begin{frame}[fragile]
+\frametitle<presentation>{Overlapping Example Continued}
+\only<presentation>{\lstset{basicstyle=\scriptsize\ttfamily}}
+  \begin{lstlisting}
 //  define problem parameters
 typedef ConvectionDiffusionProblem<GV,Real> Param;
 Param param;
@@ -701,11 +672,6 @@ typedef Dune::PDELab::BoundaryConditionType_CD<Param> B;
 B b(gv,param);
 typedef Dune::PDELab::DirichletBoundaryCondition_CD<Param> G;
 G g(gv,param);
-\end{lstlisting}  
-\end{frame}
-\begin{frame}[fragile]
-\frametitle<presentation>{Overlapping Example Continued}
-  \begin{lstlisting}[basicstyle=\small]
 
 //  Compute constrained space
 typedef typename GFS::template ConstraintsContainer<Real>::Type C;
@@ -716,6 +682,14 @@ typedef typename GFS::template VectorContainer<Real>::Type V;
 V x(gfs,0.0);
 Dune::PDELab::interpolate(g,gfs,x);
 Dune::PDELab::set_nonconstrained_dofs(cg,0.0,x);
+\end{lstlisting}
+\only<presentation>{\lstset{basicstyle=\normalsize\ttfamily}}
+\end{frame}
+
+\begin{frame}[fragile]
+\frametitle<presentation>{Overlapping Example Continued}
+\only<presentation>{\lstset{basicstyle=\scriptsize\ttfamily}}
+  \begin{lstlisting}
 // Make grid operator space
 typedef Dune::PDELab::ConvectionDiffusion<Param> LOP; 
 LOP lop(param,2);
@@ -728,6 +702,7 @@ typedef Dune::PDELab::ISTLBackend_OVLP_BCGS_SuperLU<GFS,C> LS;
 LS ls(gfs,cg,5000,2);
 ...
 \end{lstlisting}
+\only<presentation>{\lstset{basicstyle=\normalsize\ttfamily}}
 \end{frame}
 
 \begin{frame}
@@ -753,7 +728,8 @@ and \lstinline!Scalar! the type of a scalar value in the matrix.
 
 \begin{frame}[fragile]
   \frametitle{Nonoverlapping example}
-  \begin{lstlisting}[basicstyle=\small]
+\only<presentation>{\lstset{basicstyle=\scriptsize\ttfamily}}
+  \begin{lstlisting}
 // 1. Create an non-overlapping grid
 Dune::FieldVector<double,2> L(1.0);
 Dune::FieldVector<int,2> N(16);
@@ -773,17 +749,20 @@ typedef Dune::PDELab::GridFunctionSpace<GV,FEM,CON,VBE,
 Dune::PDELab::SimpleGridFunctionStaticSize> GFS;
 GFS gfs(gv,fem,con);
 con.compute_ghosts(gfs); // con stores indices of ghost dofs
+\end{lstlisting}
+\only<presentation>{\lstset{basicstyle=\normalsize\ttfamily}}
+\end{frame}
+\begin{frame}[fragile]
+\frametitle<presentation>{Nonoverlapping Example Continued}
+\only<presentation>{\lstset{basicstyle=\scriptsize\ttfamily}}
+  \begin{lstlisting}
 typedef ConvectionDiffusionProblem<GV,Real> Param;
 Param param;
 typedef Dune::PDELab::BoundaryConditionType_CD<Param> B;
 B b(gv,param);
 typedef Dune::PDELab::DirichletBoundaryCondition_CD<Param> G;
 G g(gv,param);
-\end{lstlisting}
-\end{frame}
-\begin{frame}[fragile]
-\frametitle<presentation>{Nonoverlapping Example Continued}
-  \begin{lstlisting}[basicstyle=\small]
+
 // Compute constrained space
 typedef typename GFS::template ConstraintsContainer<Real>::Type C;
 C cg;
@@ -795,6 +774,15 @@ V x(gfs,0.0);
 Dune::PDELab::interpolate(g,gfs,x);
 Dune::PDELab::set_nonconstrained_dofs(cg,0.0,x);
 
+\end{lstlisting}
+\only<presentation>{\lstset{basicstyle=\normalsize\ttfamily}}
+  
+\end{frame}
+
+\begin{frame}[fragile]
+\frametitle<presentation>{Nonoverlapping Example Continued}
+\only<presentation>{\lstset{basicstyle=\scriptsize\ttfamily}}
+  \begin{lstlisting}
 // Make grid operator space
 typedef Dune::PDELab::ConvectionDiffusion<Param> LOP; 
 LOP lop(param,2);
@@ -807,6 +795,7 @@ typedef Dune::PDELab::ISTLBackend_NOVLP_BCGS_NOPREC<GFS> LS;
 LS ls(gfs,5000,1);
 ...
 \end{lstlisting}
+\only<presentation>{\lstset{basicstyle=\normalsize\ttfamily}}
   
 \end{frame}
 
