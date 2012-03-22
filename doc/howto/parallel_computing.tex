@@ -60,7 +60,7 @@ between processors with messages send over a network (computer clusters, super c
 \begin{center}
   \includegraphics[width=0.9\textwidth]{EPS/numalayout}
 \end{center}
-\item \textit{Private memory architecture}: Same as for NUMA! 
+\item \textit{Message passing architecture}: Same as for NUMA! 
 \item Distributing data structures is hard and not automatic in
   general.
 \item Parallelisation effort for NUMA and MP is almost the same.
@@ -76,7 +76,6 @@ between processors with messages send over a network (computer clusters, super c
 \item Users view: Copy (contiguous) memory block from one address space to the
   other.
 \item Message is subdivided into individual packets.
-\item Network is packet-switched. 
 \item A packet consists of an envelope and
   the data:
 \begin{center}
@@ -84,7 +83,7 @@ between processors with messages send over a network (computer clusters, super c
 \end{center}
 \item Header: Destination, size and kind of data.
 \item Payload: Size ranges from some bytes to kilobytes.
-\item Trailer: E.g. checksum for error detection.
+\item Trailer: e.g. checksum for error detection.
 \end{itemize}
 \end{frame}
 
@@ -94,7 +93,7 @@ between processors with messages send over a network (computer clusters, super c
 
 \begin{itemize}
 \item Portable Library with functions for message exchange between processes
-\item Developed 1993-94 by a international board
+\item Developed 1993-94 by an international board
 \item Available on nearly all computer platforms
 \item Free Implementations also for LINUX Clusters: {\bf MPICH}\footnote{\href{http://www-unix.mcs.anl.gov/mpi/mpich}{{\tiny http://www-unix.mcs.anl.gov/mpi/mpich}}}
  and {\bf OpenMPI}\footnote{\href{http://www.open-mpi.org/}{{\tiny http://www.open-mpi.org/}}} (former {\bf LAM})
@@ -112,6 +111,7 @@ between processors with messages send over a network (computer clusters, super c
 \begin{small}\textit{Remark:} There is a special MPICH version for shared-memory machines using memory copy operations instead of slower mesage passing algorithms.
 OpenMPI can even distinguish automatically between processes which share the same address space and
 processes on remote machines and use either memory copy or message passing.
+
 \end{small}
 \end{frame}
 
@@ -167,7 +167,7 @@ Machine  & Cells & Time steps & Newton steps & $T_{total}$ \\
   \frametitle<presentation>{Domain Decomposition}
 
   \begin{itemize}
-  \item partition a problem by splitting the domain it into small subdomains
+  \item partition a problem by splitting the domain into small subdomains
   \item each part is solved by a different processor
   \item goes back to an idea of H.A. Schwarz who in 1890 presented a method to prove the existence of
         solutions of the Laplace equation on ``complicated'' domains.
@@ -274,7 +274,7 @@ Machine  & Cells & Time steps & Newton steps & $T_{total}$ \\
 
 \begin{itemize}
 \item Each grid entity can be present on one or more processors.
-\item Each entity on one processor has a partition type, which can be determined 
+\item Each entity on a processor has a partition type, which can be determined 
 by the method\\
         \hspace*{1cm}\lstinline!entity.partitionType()!
 \item The possible partition types are:\\
@@ -329,13 +329,13 @@ by the method\\
 \begin{frame}
   \frametitle<presentation>{Parallel Grids in Dune}
   \begin{itemize}
-  \item<1-> \lstinline[basicstyle=\normalfont\ttfamily]!YaspGrid!
+  \item \lstinline[basicstyle=\normalfont\ttfamily]!YaspGrid!
       \begin{itemize}
       \item structured
       \item 2D/3D
       \item arbitrary overlap
       \end{itemize}
-  \item<2-> \lstinline[basicstyle=\normalfont\ttfamily]!UGGrid!
+  \item \lstinline[basicstyle=\normalfont\ttfamily]!UGGrid!
       \begin{itemize}
       \item unstructured
       \item 2D/3D
@@ -344,7 +344,7 @@ by the method\\
       \item (conforming) red-green refinement
       \item (non-free!)
       \end{itemize}
-  \item<3-> \lstinline[basicstyle=\normalfont\ttfamily]!ALUGrid!
+  \item \lstinline[basicstyle=\normalfont\ttfamily]!ALUGrid!
       \begin{itemize}
       \item unstructured
       \item 3D
@@ -488,6 +488,51 @@ data communicate and only the entities present on both processes are included in
   
 \end{frame}
 
+\begin{frame}[fragile]
+  \frametitle<presentation>{MPIHelper}
+  \begin{itemize}
+  \item Dune parallel programs use a tool to help in setting up and handling the 
+parallel communication with MPI. It also takes care that the parallel program
+is finished in a defined way. It is called \lstinline!MPIHelper!. It has to be 
+created at the very beginning of the program
+using the \lstinline!instance! method of the \lstinline!Dune::MPIHelper! class.
+\lstinputlisting[basicstyle=\tiny,numbers=left, 
+numberstyle=\tiny, numbersep=2pt,lastline=12]{../../src/course-examples/example01_main.hh}
+       
+ \end{itemize}
+\end{frame}
+
+\begin{frame}[fragile]
+  \frametitle<presentation>{MPIHelper}
+  \begin{itemize}
+  \item MPIHelper provides the methods 
+ \begin{center}
+    \scriptsize
+    \begin{tabular}{l|l}
+      \hline
+      Method name & Description\\\hline
+      \lstinline!rank! & obtain number (rank) of this process\\
+      \lstinline!size! & obtain number of processes \\
+      \hline
+    \end{tabular}    
+ \end{center}\medskip
+  \item MPIHelper provides the static methods 
+ \begin{center}
+    \scriptsize
+    \begin{tabular}{l|l}
+      \hline
+      Method name & Description\\\hline
+      \lstinline!getCommunicator! & get communicator to exchange data
+      with\\ & all process (\lstinline!MPI_COMM_WORLD!)\\
+      \lstinline!getLocalCommunicator! & get communicator to exchange data with\\& the local process only (\lstinline!MPI_COMM_SELF!)\\
+      \lstinline!getCollectiveCommunication! & get communicator\\
+      \lstinline!instance! & get access to the helper singleton\\
+      \hline
+    \end{tabular}    
+ \end{center}
+ \end{itemize}
+\end{frame}
+
 \subsubsection{Load-Balancing and Adaptation}
 \begin{frame}[fragile]
   \frametitle<presentation>{Load-Balancing}
@@ -519,17 +564,15 @@ adaptive grid refinement and load-balancing are not possible) by writing a class
 template<int dim>
 class YaspPartition : public Dune::YLoadBalance<dim>
 {
-  private:
-    const unsigned &numProc;  // number of processes
   public:
-    YaspPartition( const unsigned &numProc_ ) : numProc( numProc_ )
+    YaspPartition()
     {}
 
     typedef Dune::FieldVector<int, dim>  iTupel;
     void loadbalance (const iTupel& size, int P, iTupel& dims) const
     {
       dims = 1;
-      dims[1]= numProc;
+      dims[1] = P;
     }
 };
 \end{lstlisting}
@@ -542,9 +585,8 @@ Now you can pass the object to the constructor during grid creation
 Dune::FieldVector<int,2> n(10), overlap(1);
 Dune::FieldVector<double,2> upper(1.0);
 Dune::FieldVector<bool,dim> periodic(false);
-YaspGrid<2> grid(upper, n, periodic, 0);
 YaspPartition<dim> yp(mpiHelper.size());
-GRID grid(mpiHelper.getCommunicator(), upper, n, periodic, overlap, &yp );
+YaspGrid<2> grid(mpiHelper.getCommunicator(), upper, n, periodic, overlap, &yp );
 \end{lstlisting}
 \end{frame}
 
@@ -610,7 +652,7 @@ iterative solver like SSOR).
 coefficient is applied. 
 \item With an overlapping Schwarz method the convergence is better the larger the overlap.
 \end{itemize}
-\item For overlapping domain decomposition there exists also an algebraic multigrid preconditioner.
+\item There also exists also an algebraic multigrid preconditioner.
 \end{itemize}
 \end{frame}
 
@@ -646,7 +688,7 @@ Dune::FieldVector<double,2> L(1.0);
 Dune::FieldVector<int,2> N(16);
 Dune::FieldVector<bool,2> periodic(false);
 int overlap=2; 
-Dune::YaspGrid<2> grid(helper.getCommunicator(),L,N,periodic,overlap);
+Dune::YaspGrid<2> grid(mpiHelper.getCommunicator(),L,N,periodic,overlap);
 typedef Dune::YaspGrid<2>::LeafGridView GV;
 const GV& gv=grid.leafView();
 
@@ -735,7 +777,7 @@ Dune::FieldVector<double,2> L(1.0);
 Dune::FieldVector<int,2> N(16);
 Dune::FieldVector<bool,2> periodic(false);
 int overlap=0; // needs overlap 0 because overlap elements are not assembled
-Dune::YaspGrid<2> grid(helper.getCommunicator(),L,N,periodic,overlap);
+Dune::YaspGrid<2> grid(mpiHelper.getCommunicator(),L,N,periodic,overlap);
 typedef Dune::YaspGrid<2>::LeafGridView GV;
 const GV& gv=grid.leafView();
 
