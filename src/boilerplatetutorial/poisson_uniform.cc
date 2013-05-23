@@ -111,9 +111,12 @@ int main(int argc, char **argv)
   typedef double NumberType;
 
   // make grid
+#ifdef HAVE_UG
   typedef Dune::UGGrid<dim> GM;
   //typedef Dune::ALUSimplexGrid<dim,dim> GM;
-  //typedef Dune::YaspGrid<dim> GM;
+#else
+  typedef Dune::YaspGrid<dim> GM;
+#endif
   typedef Dune::PDELab::StructuredGrid<GM> Grid;
   Grid grid(elemtype,cells);
   grid->loadBalance();
