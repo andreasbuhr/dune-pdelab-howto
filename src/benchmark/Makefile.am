@@ -40,6 +40,7 @@ cgstokes_old_LDFLAGS =				\
 	$(UG_LDFLAGS)				\
 	$(ALUGRID_LDFLAGS)
 cgstokes_old_LDADD =				\
+	$(DUNE_LIBS)                            \
 	$(SUPERLU_LIBS)				\
 	$(ALUGRID_LIBS)				\
 	$(UG_LIBS)
