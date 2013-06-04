@@ -17,7 +17,6 @@ DUNE_CHECK_ALL
 # implicitly set the Dune-flags everywhere
 AC_SUBST(AM_CPPFLAGS, $DUNE_CPPFLAGS)
 AC_SUBST(AM_LDFLAGS, $DUNE_LDFLAGS)
-LIBS="$DUNE_LIBS"
 
 AC_CONFIG_FILES([
   Makefile
