@@ -34,6 +34,10 @@
 #include <dune/pdelab/common/function.hh>
 #include <dune/pdelab/common/vtkexport.hh>
 
+#include <dune/pdelab/backend/istl/heterogeneousvectorbackend.hh>
+#include <dune/pdelab/backend/istl/heterogeneousmatrixbackend.hh>
+#include <dune/pdelab/backend/istl/preconditioner.hh>
+
 #include "sproblemA.hh"
 
 #define USE_SUPER_LU
@@ -42,6 +46,7 @@
 //===============================================================
 // Problem setup and solution
 //===============================================================
+
 
 // generate a P1 function and output it
 template<typename GV, typename RF, int vOrder, int pOrder>
@@ -64,17 +69,17 @@ void stokes (const GV& gv, std::string filename, const std::string method)
     static const unsigned int vBlockSize = Dune::MonomImp::Size<dim,vOrder>::val;
     static const unsigned int pBlockSize = Dune::MonomImp::Size<dim,pOrder>::val;
 
-    typedef Dune::PDELab::ISTLVectorBackend<Dune::PDELab::ISTLParameters::no_blocking,vBlockSize> VVectorBackend;
-    typedef Dune::PDELab::ISTLVectorBackend<Dune::PDELab::ISTLParameters::no_blocking,pBlockSize> PVectorBackend;
-    typedef Dune::PDELab::ISTLVectorBackend<> VelocityVectorBackend;
+    // This doesn't work yet!
+    // typedef Dune::PDELab::ISTLVectorBackend<Dune::PDELab::ISTLParameters::static_blocking,vBlockSize> VVectorBacken
+    // typedef Dune::PDELab::HeterogeneousVectorBackend VelocityVectorBackend;
 
-#if 0
-    // this creates a flat backend (i.e. blocksize == 1)
-    typedef Dune::PDELab::ISTLVectorBackend<Dune::PDELab::ISTLParameters::no_blocking> VectorBackend;
-#else
-    // this creates a backend with static blocks matching the size of the LFS
-    typedef Dune::PDELab::ISTLVectorBackend<Dune::PDELab::ISTLParameters::static_blocking> VectorBackend;
-#endif
+    typedef Dune::PDELab::ISTLVectorBackend<Dune::PDELab::ISTLParameters::no_blocking,vBlockSize> VVectorBackend;
+    typedef Dune::PDELab::ISTLVectorBackend<Dune::PDELab::ISTLParameters::static_blocking> VelocityVectorBackend;
+
+    typedef Dune::PDELab::ISTLVectorBackend<Dune::PDELab::ISTLParameters::static_blocking,pBlockSize> PVectorBackend;
+
+    typedef Dune::PDELab::HeterogeneousVectorBackend VectorBackend;
+
     // velocity
     Dune::dinfo << "--- v^dim" << std::endl;
     typedef Dune::PDELab::EntityBlockedOrderingTag VelocityOrderingTag;
@@ -95,7 +100,7 @@ void stokes (const GV& gv, std::string filename, const std::string method)
     pGfs.name("p");
     // GFS
     Dune::dinfo << "--- v^dim,p" << std::endl;
-    typedef Dune::PDELab::EntityBlockedOrderingTag StokesOrderingTag;
+    typedef Dune::PDELab::LexicographicOrderingTag StokesOrderingTag;
     typedef Dune::PDELab::CompositeGridFunctionSpace<
         VectorBackend, StokesOrderingTag,
         velocityGFS, pGFS> GFS;
@@ -144,7 +149,7 @@ void stokes (const GV& gv, std::string filename, const std::string method)
 
     typedef Dune::PDELab::EmptyTransformation C;
     typedef Dune::PDELab::GridOperator
-        <GFS,GFS,LocalDGOperator, Dune::PDELab::ISTLMatrixBackend,RF,RF,RF,C,C> GOS;
+        <GFS,GFS,LocalDGOperator, Dune::PDELab::HeterogeneousMatrixBackend,RF,RF,RF,C,C> GOS;
     GOS gos(gfs,gfs,lop);
 
     std::cout << "=== grid operator space setup " <<  watch.elapsed() << " s" << std::endl;
@@ -158,9 +163,6 @@ void stokes (const GV& gv, std::string filename, const std::string method)
     gos.jacobian(x,m);
     std::cout << "=== jacobian assembly " <<  watch.elapsed() << " s" << std::endl;
 
-    std::ofstream matrix("Matrix");
-    Dune::printmatrix(matrix, m.base(), "M", "r", 6, 3);
-
     // evaluate residual w.r.t initial guess
     V r(gfs);
     r = 0.0;
@@ -173,11 +175,30 @@ void stokes (const GV& gv, std::string filename, const std::string method)
 
     typedef typename M::BaseT ISTLM;
     typedef typename V::BaseT ISTLV;
-    #ifdef USE_SUPER_LU // use lu decomposition as solver
+    #if 1
     #if HAVE_SUPERLU
-    // make ISTL solver
+    // make ISTL solver with block SuperLU preconditioner
+
     Dune::MatrixAdapter<ISTLM,ISTLV,ISTLV> opa(m.base());
-    Dune::SuperLU<ISTLM> solver(m.base(), verbose?1:0);
+
+    typedef typename ISTLV::template Block<0>::type VelocityV;
+    typedef typename ISTLM::template Block<0,0>::type VelocityM;
+    typedef Dune::PDELab::istl::SuperLUPreconditioner<VelocityM,VelocityV,VelocityV> VelocityPrec;
+
+    typedef typename ISTLV::template Block<1>::type PressureV;
+    typedef typename ISTLM::template Block<1,1>::type PressureM;
+    typedef Dune::PDELab::istl::SuperLUPreconditioner<PressureM,PressureV,PressureV> PressurePrec;
+
+    typedef Dune::PDELab::istl::HeterogeneousDiagonalBlockPreconditioner<ISTLV,ISTLV> Prec;
+
+    Prec prec(
+      Dune::make_tuple(
+        Dune::make_shared<VelocityPrec>(m.base().template block<0,0>()),
+        Dune::make_shared<PressurePrec>(m.base().template block<1,1>())
+        )
+      );
+
+    Dune::BiCGSTABSolver<ISTLV> solver(opa,prec,1E-10,20000, 2);
     Dune::InverseOperatorResult stat;
     #else
     #error No superLU support, please install and configure it.
@@ -185,9 +206,9 @@ void stokes (const GV& gv, std::string filename, const std::string method)
     #else // Use iterative solver
     // make ISTL solver
     Dune::MatrixAdapter<ISTLM,ISTLV,ISTLV> opa(m.base());
-    Dune::SeqILU0<ISTLM,ISTLV,ISTLV> ilu0(m.base(),1.0);
-    typedef typename M::BaseT ISTLM;
-    Dune::BiCGSTABSolver<ISTLV> solver(opa,ilu0,1E-10,20000, verbose?2:1);
+    //Dune::SeqILU0<ISTLM,ISTLV,ISTLV> ilu0(m.base(),1.0);
+    Dune::PDELab::istl::NoOpPreconditioner<ISTLV,ISTLV> prec;
+    Dune::BiCGSTABSolver<ISTLV> solver(opa,prec,1E-10,20000, 2);
     Dune::InverseOperatorResult stat;
     #endif
 
@@ -195,7 +216,6 @@ void stokes (const GV& gv, std::string filename, const std::string method)
     r *= -1.0; // need -residual
     x = r;
     solver.apply(x.base(),r.base(),stat);
-
     // // Create VTK Output
     // using namespace Dune::PDELab::TypeTree;
     // typedef typename Dune::PDELab::GridFunctionSubSpace
