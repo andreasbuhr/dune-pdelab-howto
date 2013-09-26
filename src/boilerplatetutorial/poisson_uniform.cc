@@ -113,7 +113,7 @@ int main(int argc, char **argv)
   typedef Dune::YaspGrid<dim> GM;
 
   typedef Dune::PDELab::StructuredGrid<GM> Grid;
-  Grid grid(elemtype,cells);
+  Grid grid(elemtype,cells,1);
   grid->loadBalance();
 
   // make problem parameters
@@ -144,9 +144,9 @@ int main(int argc, char **argv)
   ASSEMBLER assembler(fs,lop);
 
   // make linear solver and solve problem
-  //typedef Dune::PDELab::ISTLSolverBackend_IterativeDefault<FS,ASSEMBLER,solvertype> SBE;
-  typedef Dune::PDELab::ISTLSolverBackend_CG_AMG_SSOR<FS,ASSEMBLER,solvertype> SBE;
-  SBE sbe(fs,assembler,5000,1);
+  typedef Dune::PDELab::ISTLSolverBackend_IterativeDefault<FS,ASSEMBLER,solvertype> SBE;
+  //typedef Dune::PDELab::ISTLSolverBackend_CG_AMG_SSOR<FS,ASSEMBLER,solvertype> SBE;
+  SBE sbe(fs,assembler,100,1);
   typedef Dune::PDELab::StationaryLinearProblemSolver<ASSEMBLER::GO,SBE::LS,V> SLP;
   SLP slp(*assembler,x,*sbe,1e-6);
   slp.apply();
