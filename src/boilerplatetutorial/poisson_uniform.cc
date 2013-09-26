@@ -104,19 +104,14 @@ int main(int argc, char **argv)
 
   // define parameters
   const unsigned int dim = 3;
-  const unsigned int degree = 2;
-  const Dune::GeometryType::BasicType elemtype = Dune::GeometryType::simplex;
+  const unsigned int degree = 1;
+  const Dune::GeometryType::BasicType elemtype = Dune::GeometryType::cube;
   const Dune::PDELab::MeshType meshtype = Dune::PDELab::MeshType::conforming;
-  const Dune::SolverCategory::Category solvertype = Dune::SolverCategory::sequential;
+  const Dune::SolverCategory::Category solvertype = Dune::SolverCategory::overlapping;
   typedef double NumberType;
 
-  // make grid
-#ifdef HAVE_UG
-  typedef Dune::UGGrid<dim> GM;
-  //typedef Dune::ALUSimplexGrid<dim,dim> GM;
-#else
   typedef Dune::YaspGrid<dim> GM;
-#endif
+
   typedef Dune::PDELab::StructuredGrid<GM> Grid;
   Grid grid(elemtype,cells);
   grid->loadBalance();
