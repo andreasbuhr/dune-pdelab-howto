@@ -9,13 +9,11 @@ if SUPERLU
 SUPERLUPROGRAMS =
 endif
 
-if ALUGRID
-   ALUGRIDPROGRAMS = poisson_uniform \
-	poisson_adaptive             \
+ALUGRIDPROGRAMS = poisson_uniform \
+        poisson_adaptive             \
 	advection_stationary         \
 	advection_instationary       \
 	heat_instationary
-endif
 
 noinst_PROGRAMS =				\
     $(EIGENPROGRAMS)				\
