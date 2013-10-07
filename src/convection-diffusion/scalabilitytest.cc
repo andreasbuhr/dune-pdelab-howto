@@ -269,26 +269,26 @@ void runDG ( const GV& gv,
   U u(gfs,0.0);
 
   // make linear solver and solve problem
-  int verbose=1;
+  int verbose=2;
   if (gv.comm().rank()!=0) verbose=0;
   if (method=="SIPG")
     {
       typedef Dune::PDELab::ISTLBackend_OVLP_CG_SSORk<GFS,CC> LS;
-      LS ls(gfs,cc,10,5,verbose);
+      LS ls(gfs,cc,500,5,verbose);
       // typedef Dune::PDELab::ISTLBackend_SEQ_CG_ILU0 LS;
       // LS ls(10000,1);
       typedef Dune::PDELab::StationaryLinearProblemSolver<GO,LS,U> SLP;
-      SLP slp(go,u,ls,1e-6);
+      SLP slp(go,u,ls,1e-10,2);
       slp.apply();
     }
   else
     {
       typedef Dune::PDELab::ISTLBackend_OVLP_BCGS_SSORk<GFS,CC> LS;
-      LS ls(gfs,cc,10,5,verbose);
+      LS ls(gfs,cc,500,5,verbose);
       // typedef Dune::PDELab::ISTLBackend_SEQ_BCGS_ILU0 LS;
       // LS ls(10000,1);
       typedef Dune::PDELab::StationaryLinearProblemSolver<GO,LS,U> SLP;
-      SLP slp(go,u,ls,1e-6);
+      SLP slp(go,u,ls,1e-10,2);
       slp.apply();
     }
 
