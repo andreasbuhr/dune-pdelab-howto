@@ -54,7 +54,7 @@
 #include <dune/pdelab/backend/istl/blockvectorbackend.hh>
 #include <dune/pdelab/backend/istl/bellmatrixbackend.hh>
 
-#include <dune/pdelab/ordering/dgredblack.hh>
+#include <dune/pdelab/ordering/redblackdg.hh>
 #include <dune/pdelab/ordering/permutedordering.hh>
 
 #include<dune/istl/preconditioners/sequentialjacobi.hh>
