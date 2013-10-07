@@ -49,6 +49,16 @@
 #include"problemA.hh"
 
 
+#include <dune/common/memory/blocked_allocator.hh>
+
+#include <dune/pdelab/backend/istl/blockvectorbackend.hh>
+#include <dune/pdelab/backend/istl/bellmatrixbackend.hh>
+
+#include <dune/pdelab/ordering/dgredblack.hh>
+#include <dune/pdelab/ordering/permutedordering.hh>
+
+#include<dune/istl/preconditioners/sequentialjacobi.hh>
+#include<dune/istl/preconditioners/sequentialsor.hh>
 
 const bool graphics = true;
 
@@ -82,6 +92,7 @@ public:
 template<class GV> 
 void test (const GV& gv)
 {
+/*
   typedef typename GV::Grid::ctype DF;
   typedef double RF;
   const int dim = GV::dimension;
@@ -142,6 +153,7 @@ void test (const GV& gv)
   // make discrete function object
   typedef Dune::PDELab::DiscreteGridFunction<GFS,V> DGF;
   DGF dgf(gfs,x);
+*/
 }
 
 template<typename GV, typename RF>
@@ -240,11 +252,33 @@ void runDG ( const GV& gv,
 
   // make grid function space 
   typedef Dune::PDELab::P0ParallelConstraints CON;
-  const Dune::PDELab::ISTLParameters::Blocking blocking
-    = Dune::PDELab::ISTLParameters::static_blocking;
-  typedef Dune::PDELab::ISTLVectorBackend<blocking,blocksize> VBE;
-  typedef Dune::PDELab::GridFunctionSpace<GV,FEM,CON,VBE> GFS;
-  GFS gfs(gv,fem);
+  //const Dune::PDELab::ISTLParameters::Blocking blocking
+  //  = Dune::PDELab::ISTLParameters::static_blocking;
+  //typedef Dune::PDELab::ISTLVectorBackend<blocking,blocksize> VBE;
+
+  typedef Dune::PDELab::istl::BlockVectorBackend<
+    Dune::Memory::blocked_cache_aligned_allocator<double,std::size_t,16>
+    > VBE;
+  VBE vbe(blocksize);
+
+  typedef Dune::PDELab::DefaultLeafOrderingTag OrderingTag;
+  OrderingTag orderingTag;
+
+  /*
+  typedef Dune::PDELab::ordering::Permuted<
+    Dune::PDELab::DefaultLeafOrderingTag
+    > OrderingTag;
+
+  OrderingTag orderingTag;
+  std::size_t black_offset;
+
+  std::tie(orderingTag.template permuted<1>().permutation(),black_offset) = Dune::PDELab::redBlackDGOrdering(gv);
+
+  std::cout << "offset of black partition: " << black_offset << std::endl;
+  */
+
+  typedef Dune::PDELab::GridFunctionSpace<GV,FEM,CON,VBE,OrderingTag> GFS;
+  GFS gfs(gv,fem,vbe,orderingTag);
 
   // make local operator
   Dune::PDELab::ConvectionDiffusionDGMethod::Type m;
@@ -255,7 +289,11 @@ void runDG ( const GV& gv,
   if (weights=="OFF") w = Dune::PDELab::ConvectionDiffusionDGWeights::weightsOff;
   typedef Dune::PDELab::ConvectionDiffusionDG<PROBLEM,FEM> LOP;
   LOP lop(problem,m,w,alpha);
-  typedef typename Dune::PDELab::ISTLMatrixBackend MBE;
+
+  typedef typename Dune::PDELab::istl::BELLMatrixBackend<
+    Dune::Memory::blocked_cache_aligned_allocator<double,std::size_t,16>
+    > MBE;
+
   typedef Dune::PDELab::ConvectionDiffusionDirichletExtensionAdapter<PROBLEM> G;
   G g(gv,problem);
   typedef typename GFS::template ConstraintsContainer<Real>::Type CC;
@@ -267,30 +305,83 @@ void runDG ( const GV& gv,
   // make a vector of degree of freedom vectors and initialize it with Dirichlet extension
   typedef typename GO::Traits::Domain U;
   U u(gfs,0.0);
+  raw(u).setChunkSize(1024);
+
+  U r(gfs,0.0);
+  raw(r).setChunkSize(1024);
+  go.residual(u,r);
+
+  typename GO::Traits::Jacobian mat(go);
+  raw(mat).setChunkSize(1024);
+  go.jacobian(u,mat);
 
   // make linear solver and solve problem
-  int verbose=1;
+  int verbose=2;
   if (gv.comm().rank()!=0) verbose=0;
+
+  typedef Dune::PDELab::OverlappingOperator<
+    CC,
+    typename GO::Traits::Jacobian,
+    typename GO::Traits::Domain,
+    typename GO::Traits::Range
+    > POP;
+  POP pop(cc,mat);
+
+  Dune::PDELab::istl::ParallelHelper<GFS> helper(gfs);
+
+  typedef Dune::PDELab::OverlappingScalarProduct<
+    GFS,
+    typename GO::Traits::Domain
+    > PSP;
+  PSP psp(gfs,helper);
+
+  /*
+  typedef Dune::ISTL::SequentialRedBlackBlockSOR<
+    typename GO::Traits::Jacobian::Container,
+    typename U::Container,
+    typename U::Container
+    > PC;
+    PC pc(raw(mat),black_offset,1.0,false,5);*/
+
+  typedef Dune::ISTL::SequentialBlockJacobi<
+    typename GO::Traits::Jacobian::Container,
+    typename U::Container,
+    typename U::Container
+    > PC;
+    PC pc(raw(mat),1.0,false,5);
+
+  typedef Dune::PDELab::OverlappingWrappedPreconditioner<
+    CC,
+    GFS,
+    PC
+    > PPC;
+  PPC ppc(gfs,pc,cc,helper);
+
+  U z(gfs,0.0);
+  raw(z).setChunkSize(1024);
+
+  int verbosity = gfs.gridView().comm().rank() == 0 ? 2 : 0;
+
   if (method=="SIPG")
     {
-      typedef Dune::PDELab::ISTLBackend_OVLP_CG_SSORk<GFS,CC> LS;
-      LS ls(gfs,cc,10,5,verbose);
-      // typedef Dune::PDELab::ISTLBackend_SEQ_CG_ILU0 LS;
-      // LS ls(10000,1);
-      typedef Dune::PDELab::StationaryLinearProblemSolver<GO,LS,U> SLP;
-      SLP slp(go,u,ls,1e-6);
-      slp.apply();
+      typedef Dune::CGSolver<U> Solver;
+
+      Solver solver(pop,psp,ppc,1e-10,500,verbosity);
+
+
+      Dune::InverseOperatorResult stat;
+      solver.apply(z,r,stat);
     }
   else
     {
-      typedef Dune::PDELab::ISTLBackend_OVLP_BCGS_SSORk<GFS,CC> LS;
-      LS ls(gfs,cc,10,5,verbose);
-      // typedef Dune::PDELab::ISTLBackend_SEQ_BCGS_ILU0 LS;
-      // LS ls(10000,1);
-      typedef Dune::PDELab::StationaryLinearProblemSolver<GO,LS,U> SLP;
-      SLP slp(go,u,ls,1e-6);
-      slp.apply();
+      typedef Dune::BiCGSTABSolver<U> Solver;
+      Solver solver(pop,psp,ppc,1e-10,500,verbosity);
+
+      Dune::InverseOperatorResult stat;
+      solver.apply(z,r,stat);
     }
+
+  u -= z;
 
   if( graphics ){
     typedef Dune::PDELab::DiscreteGridFunction<GFS,U> UDGF;
