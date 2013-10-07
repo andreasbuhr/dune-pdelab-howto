@@ -242,6 +242,9 @@ void runDG ( const GV& gv,
              std::string weights, 
              double alpha )
 {
+
+  Dune::Timer timer;
+
   // coordinate and result type
   typedef typename GV::Grid::ctype Coord;
   typedef double Real;
@@ -277,8 +280,13 @@ void runDG ( const GV& gv,
   std::cout << "offset of black partition: " << black_offset << std::endl;
   */
 
+  std::cout << "Creating GFS and Ordering... " << std::flush;
+
   typedef Dune::PDELab::GridFunctionSpace<GV,FEM,CON,VBE,OrderingTag> GFS;
   GFS gfs(gv,fem,vbe,orderingTag);
+  gfs.ordering();
+
+  std::cout << timer.elapsed() << std::endl;
 
   // make local operator
   Dune::PDELab::ConvectionDiffusionDGMethod::Type m;
@@ -298,7 +306,15 @@ void runDG ( const GV& gv,
   G g(gv,problem);
   typedef typename GFS::template ConstraintsContainer<Real>::Type CC;
   CC cc;
+
+  timer.reset();
+  std::cout << "Evaluating constraints... " << std::flush;
+
   Dune::PDELab::constraints(g,gfs,cc,false);
+
+  std::cout << timer.elapsed() << std::endl;
+  timer.reset();
+
   typedef Dune::PDELab::GridOperator<GFS,GFS,LOP,MBE,Real,Real,Real,CC,CC> GO;
   GO go(gfs,cc,gfs,cc,lop);
 
@@ -309,16 +325,30 @@ void runDG ( const GV& gv,
 
   U r(gfs,0.0);
   raw(r).setChunkSize(1024);
+
+  timer.reset();
+  std::cout << "Evaluating residual... " << std::flush;
+
   go.residual(u,r);
 
+  std::cout << timer.elapsed() << std::endl;
+
+  timer.reset();
+  std::cout << "Creating matrix... " << std::flush;
+
   typename GO::Traits::Jacobian mat(go);
+
+  std::cout << timer.elapsed() << std::endl;
+
+  timer.reset();
+  std::cout << "Evaluating jacobian... " << std::flush;
+
   raw(mat).setChunkSize(1024);
   go.jacobian(u,mat);
 
-  // make linear solver and solve problem
-  int verbose=2;
-  if (gv.comm().rank()!=0) verbose=0;
+  std::cout << timer.elapsed() << std::endl;
 
+  // make linear solver and solve problem
   typedef Dune::PDELab::OverlappingOperator<
     CC,
     typename GO::Traits::Jacobian,
