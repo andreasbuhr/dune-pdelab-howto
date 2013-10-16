@@ -264,10 +264,10 @@ void runDG ( const GV& gv,
     > VBE;
   VBE vbe(blocksize);
 
-  typedef Dune::PDELab::DefaultLeafOrderingTag OrderingTag;
-  OrderingTag orderingTag;
+  //typedef Dune::PDELab::DefaultLeafOrderingTag OrderingTag;
+  //OrderingTag orderingTag;
 
-  /*
+
   typedef Dune::PDELab::ordering::Permuted<
     Dune::PDELab::DefaultLeafOrderingTag
     > OrderingTag;
@@ -278,7 +278,7 @@ void runDG ( const GV& gv,
   std::tie(orderingTag.template permuted<1>().permutation(),black_offset) = Dune::PDELab::redBlackDGOrdering(gv);
 
   std::cout << "offset of black partition: " << black_offset << std::endl;
-  */
+
 
   std::cout << "Creating GFS and Ordering... " << std::flush;
 
@@ -295,7 +295,12 @@ void runDG ( const GV& gv,
   Dune::PDELab::ConvectionDiffusionDGWeights::Type w;
   if (weights=="ON") w = Dune::PDELab::ConvectionDiffusionDGWeights::weightsOn;
   if (weights=="OFF") w = Dune::PDELab::ConvectionDiffusionDGWeights::weightsOff;
-  typedef Dune::PDELab::ConvectionDiffusionDG<PROBLEM,FEM> LOP;
+  typedef Dune::PDELab::ConvectionDiffusionDG<
+    PROBLEM,
+    FEM,
+    Dune::Memory::blocked_cache_aligned_allocator<double,std::size_t,4>,
+    blocksize
+    > LOP;
   LOP lop(problem,m,w,alpha);
 
   typedef typename Dune::PDELab::istl::BELLMatrixBackend<
@@ -371,14 +376,15 @@ void runDG ( const GV& gv,
     typename U::Container,
     typename U::Container
     > PC;
-    PC pc(raw(mat),black_offset,1.0,false,5);*/
+    PC pc(raw(mat),black_offset,1.0,false,5);
+  */
 
   typedef Dune::ISTL::SequentialBlockJacobi<
     typename GO::Traits::Jacobian::Container,
     typename U::Container,
     typename U::Container
     > PC;
-    PC pc(raw(mat),1.0,false,5);
+  PC pc(raw(mat),1.0,false,5);
 
   typedef Dune::PDELab::OverlappingWrappedPreconditioner<
     CC,
@@ -511,6 +517,7 @@ int main(int argc, char** argv)
         const int blocksize = Dune::QkStuff::QkSize<degree,dim>::value;
         runDG<GV,FEMDG,PROBLEM,degree,blocksize>(gv,femdg,problem,"CUBE",0,"SIPG","ON",2.0);
       }
+      /*
       if (degree_dyn==2) {
         const int degree=2;
         typedef Dune::PDELab::QkDGLocalFiniteElementMap<Grid::ctype,double,degree,dim> FEMDG;
@@ -518,6 +525,7 @@ int main(int argc, char** argv)
         const int blocksize = Dune::QkStuff::QkSize<degree,dim>::value;
         runDG<GV,FEMDG,PROBLEM,degree,blocksize>(gv,femdg,problem,"CUBE",0,"SIPG","ON",2.0);
       }
+      */
       if (degree_dyn==3) {
         const int degree=3;
         typedef Dune::PDELab::QkDGLocalFiniteElementMap<Grid::ctype,double,degree,dim> FEMDG;
