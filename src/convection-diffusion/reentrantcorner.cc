@@ -19,7 +19,6 @@
 #include<dune/grid/yaspgrid.hh>
 #include<dune/grid/io/file/dgfparser/dgfyasp.hh>
 #include<dune/common/fvector.hh>
-#include<dune/common/static_assert.hh>
 #include<dune/grid/yaspgrid.hh>
 #include <dune/grid/io/file/vtk/subsamplingvtkwriter.hh>
 #include<dune/istl/bvector.hh>
